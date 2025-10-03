@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      args:
+        TZ: ${TZ:?TZ var is required. Please check the docs.}
+      context: .
+      dockerfile: ./Dockerfile.backend
+    tty: true
+    network_mode: "host"
+    restart: unless-stopped
+    environment:
+      STEAM_API_KEY: ${STEAM_API_KEY:?STEAM_API_KEY var is required. Please check the docs.}
+      DB_HOST_STEAM: ${DB_HOST_STEAM:?DB_HOST_STEAM var is required. Please check the docs.}
+      DB_PORT_STEAM: ${DB_PORT_STEAM:?DB_PORT_STEAM var is required. Please check the docs.}
+      DB_USER_STEAM: ${DB_USER_STEAM:?DB_USER_STEAM var is required. Please check the docs.}
+      DB_PASSWORD_STEAM: ${DB_PASSWORD_STEAM:?DB_PASSWORD_STEAM var is required. Please check the docs.}
+      DB_NAME_STEAM: ${DB_NAME_STEAM:?DB_NAME_STEAM var is required. Please check the docs.}
+      DB_HOST_SURF: ${DB_HOST_SURF:?DB_HOST_SURF var is required. Please check the docs.}
+      DB_PORT_SURF: ${DB_PORT_SURF:?DB_PORT_SURF var is required. Please check the docs.}
+      DB_USER_SURF: ${DB_USER_SURF:?DB_USER_SURF var is required. Please check the docs.}
+      DB_PASSWORD_SURF: ${DB_PASSWORD_SURF:?DB_PASSWORD_SURF var is required. Please check the docs.}
+      DB_NAME_SURF: ${DB_NAME_SURF:?DB_NAME_SURF var is required. Please check the docs.}
+      TOKEN: ${TOKEN:?TOKEN var is required. Please check the docs.}
+      SERVER_LIST: ${SERVER_LIST:?SERVER_LIST var is required. Please check the docs.}
+
+  frontend:
+    build:
+      args: 
+        VITE_API_URL: ${VITE_API_URL:?VITE_API_URL var is required. Please check the docs.}
+        TZ: ${TZ:?TZ var is required. Please check the docs.}
+        DOMAIN_NAME: ${DOMAIN_NAME:?DOMAIN_NAME var is required. Please check the docs.}
+      dockerfile: ./Dockerfile.frontend
+      context: .
+    ports:
+      - "127.0.0.1:4175:4173"
+    restart: unless-stopped
