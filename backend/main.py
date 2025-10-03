@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 import a2s
 from typing import Dict, List, Optional, Any
 import pymysql
-import requests
+import requestsF
 import os
 import os, json, httpx
 from httpx import Timeout
@@ -217,9 +217,9 @@ def get_map_records(
     sql = """
         SELECT *
         FROM PlayerRecords
-        WHERE MapName = %s AND Mode = %s
+        WHERE MapName = %s
     """
-    params = [map_query, mode]
+    params = [map_query]
 
     if steamid > 0:
         sql += " AND SteamID = %s "
@@ -239,9 +239,9 @@ def get_map_records(
                     """
                     SELECT MIN(TimerTicks) AS BestTicks
                     FROM PlayerRecords
-                    WHERE MapName = %s AND Mode = %s AND SteamID = %s;
+                    WHERE MapName = %s AND SteamID = %s;
                     """,
-                    (map_query, mode, str(steamid)),
+                    (map_query, str(steamid)),
                 )
                 best_row = cur.fetchone() or {}
                 best_ticks = best_row.get("BestTicks")
@@ -253,12 +253,12 @@ def get_map_records(
                         FROM (
                           SELECT MIN(TimerTicks) AS BestTicks
                           FROM PlayerRecords
-                          WHERE MapName = %s AND Mode = %s
+                          WHERE MapName = %s
                           GROUP BY SteamID
                         ) AS lb
                         WHERE lb.BestTicks < %s;
                         """,
-                        (map_query, mode, int(best_ticks)),
+                        (map_query, int(best_ticks)),
                     )
                     pos_row = cur.fetchone() or {}
                     position = int(pos_row.get("Position") or 0)
@@ -266,11 +266,11 @@ def get_map_records(
                         """
                         SELECT FormattedTime
                         FROM PlayerRecords
-                        WHERE MapName = %s AND Mode = %s AND SteamID = %s AND TimerTicks = %s
+                        WHERE MapName = %s AND SteamID = %s AND TimerTicks = %s
                         ORDER BY CAST(UnixStamp AS UNSIGNED) DESC
                         LIMIT 1;
                         """,
-                        (map_query, mode, str(steamid), int(best_ticks)),
+                        (map_query, str(steamid), int(best_ticks)),
                     )
                     fmt_row = cur.fetchone() or {}
                     best_formatted = fmt_row.get("FormattedTime")
@@ -449,17 +449,15 @@ def get_user_profile(
                 WITH player_last_finish AS (
                   SELECT
                     pr.MapName,
-                    pr.Mode,
                     pr.SteamID,
                     MAX(CAST(pr.UnixStamp AS UNSIGNED)) AS LastFinished
                   FROM PlayerRecords pr
-                  WHERE pr.SteamID = %s AND pr.Mode = %s
-                  GROUP BY pr.MapName, pr.Mode, pr.SteamID
+                  WHERE pr.SteamID = %s
+                  GROUP BY pr.MapName, pr.SteamID
                 ),
                 player_recent_rows AS (
                   SELECT
                     pr.MapName,
-                    pr.Mode,
                     pr.SteamID,
                     pr.TimerTicks,
                     pr.FormattedTime,
@@ -467,29 +465,25 @@ def get_user_profile(
                   FROM PlayerRecords pr
                   JOIN player_last_finish lf
                     ON lf.MapName = pr.MapName
-                   AND lf.Mode    = pr.Mode
                    AND lf.SteamID = pr.SteamID
                    AND CAST(pr.UnixStamp AS UNSIGNED) = lf.LastFinished
                 ),
                 leaderboard_best AS (
                   SELECT
                     MapName,
-                    Mode,
                     SteamID,
                     MIN(TimerTicks) AS BestTicks
                   FROM PlayerRecords
-                  WHERE Mode = %s
-                  GROUP BY MapName, Mode, SteamID
+                  GROUP BY MapName, SteamID
                 ),
                 ranked AS (
                   SELECT
                     lb.*,
-                    DENSE_RANK() OVER (PARTITION BY lb.MapName, lb.Mode ORDER BY lb.BestTicks ASC) AS pos
+                    DENSE_RANK() OVER (PARTITION BY lb.MapName ORDER BY lb.BestTicks ASC) AS pos
                   FROM leaderboard_best lb
                 )
                 SELECT
                   prr.MapName,
-                  prr.Mode,
                   prr.TimerTicks,
                   prr.FormattedTime,
                   prr.LastFinished,
@@ -497,12 +491,11 @@ def get_user_profile(
                 FROM player_recent_rows prr
                 LEFT JOIN ranked r
                   ON r.MapName = prr.MapName
-                 AND r.Mode    = prr.Mode
                  AND r.SteamID = prr.SteamID
                 ORDER BY prr.LastFinished DESC
                 LIMIT %s;
                 """,
-                (steamid, mode, mode, recent_limit),
+                (steamid, recent_limit),
             )
             recent_maps = cur.fetchall() or []
             cur.execute(
@@ -510,39 +503,34 @@ def get_user_profile(
                 WITH player_best AS (
                   SELECT
                     MapName,
-                    Mode,
                     SteamID,
                     MIN(TimerTicks) AS BestTicks,
                     MAX(CAST(UnixStamp AS UNSIGNED)) AS LastFinished
                   FROM PlayerRecords
-                  WHERE SteamID = %s AND Mode = %s
-                  GROUP BY MapName, Mode, SteamID
+                  WHERE SteamID = %s
+                  GROUP BY MapName, SteamID
                 ),
                 leaderboard_best AS (
                   SELECT
                     MapName,
-                    Mode,
                     SteamID,
                     MIN(TimerTicks) AS BestTicks
                   FROM PlayerRecords
-                  WHERE Mode = %s
-                  GROUP BY MapName, Mode, SteamID
+                  GROUP BY MapName, SteamID
                 ),
                 ranked AS (
                   SELECT
                     lb.*,
-                    DENSE_RANK() OVER (PARTITION BY lb.MapName, lb.Mode ORDER BY lb.BestTicks ASC) AS pos
+                    DENSE_RANK() OVER (PARTITION BY lb.MapName ORDER BY lb.BestTicks ASC) AS pos
                   FROM leaderboard_best lb
                 )
                 SELECT
                   pb.MapName,
-                  pb.Mode,
                   pb.BestTicks AS TimerTicks,
                   (
                     SELECT pr3.FormattedTime
                     FROM PlayerRecords pr3
                     WHERE pr3.MapName = pb.MapName
-                      AND pr3.Mode    = pb.Mode
                       AND pr3.SteamID = pb.SteamID
                       AND pr3.TimerTicks = pb.BestTicks
                     ORDER BY CAST(pr3.UnixStamp AS UNSIGNED) DESC
@@ -553,13 +541,12 @@ def get_user_profile(
                 FROM player_best pb
                 JOIN ranked r
                   ON r.MapName = pb.MapName
-                 AND r.Mode    = pb.Mode
                  AND r.SteamID = pb.SteamID
                 WHERE r.pos <= 10
                 ORDER BY r.pos ASC, pb.BestTicks ASC, pb.MapName ASC
                 LIMIT %s;
                 """,
-                (steamid, mode, mode, records_limit),
+                (steamid, records_limit),
             )
             records_top = cur.fetchall() or []
 
@@ -619,7 +606,7 @@ async def get_external_top_for_map(
 
     map_id = map_obj["id"]
 
-    sort_body = {"map_id": map_id, "mode": mode, "style": style, "bonus": bonus, "limit": limit}
+    sort_body = {"map_id": map_id, "style": style, "bonus": bonus, "limit": limit}
     headers = {"x-secret-key": token, "content-type": "application/json", "accept": "application/json"}
 
     async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
