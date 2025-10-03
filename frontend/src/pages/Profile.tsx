@@ -77,7 +77,7 @@ const Profile = () => {
   // Map search states
   const [selectedMap, setSelectedMap] = useState("");
   const [selectedTrack, setSelectedTrack] = useState("0");
-  const [selectedMode, setSelectedMode] = useState("Standard");
+  const [selectedStyle, setSelectedStyle] = useState("0");
   const [mapSearchResults, setMapSearchResults] = useState<MapSearchResult[]>([]);
   const [mapSearchResponse, setMapSearchResponse] = useState<MapSearchResponse | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -168,8 +168,8 @@ const Profile = () => {
       }
       
       // Add mode parameter if not Standard
-      if (selectedMode !== "Standard") {
-        url += `&mode=${selectedMode}`;
+      if (selectedStyle !== "0") {
+        url += `&style=${selectedStyle}`;
       }
       
       const response = await fetch(url);
@@ -303,7 +303,7 @@ const Profile = () => {
                           </div>
                           <div>
                             <p className="font-medium text-foreground">{map.MapName}</p>
-                            <p className="text-sm text-muted-foreground">{map.Mode} • {formatDate(map.LastFinished)}</p>
+                            <p className="text-sm text-muted-foreground">Style: {map.Style} • {formatDate(map.LastFinished)}</p>
                           </div>
                         </div>
                         <div className="text-right">
@@ -345,7 +345,7 @@ const Profile = () => {
                           </div>
                           <div>
                             <p className="font-medium text-foreground">{record.MapName}</p>
-                            <p className="text-sm text-muted-foreground">{record.Mode} • {formatDate(record.LastFinished)}</p>
+                            <p className="text-sm text-muted-foreground">Style: {record.Style} • {formatDate(record.LastFinished)}</p>
                           </div>
                         </div>
                         <div className="text-right">
@@ -386,7 +386,7 @@ const Profile = () => {
                       </SelectTrigger>
                       <SelectContent className="bg-gaming-surface border-primary/20">
                         <SelectItem value="0">{t("profile.mainTrack")}</SelectItem>
-                        <SelectItem value="1">{t("leaderboards.bonus")} 1</SelectItem>
+                        <SelectItem value="1">Bonus 1</SelectItem>
                         <SelectItem value="2">Bonus 2</SelectItem>
                         <SelectItem value="3">Bonus 3</SelectItem>
                         <SelectItem value="4">Bonus 4</SelectItem>
@@ -400,19 +400,23 @@ const Profile = () => {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="mode-select" className="text-sm font-medium text-foreground">Mode</Label>
-                    <Select value={selectedMode} onValueChange={setSelectedMode}>
+                    <Label htmlFor="mode-select" className="text-sm font-medium text-foreground">Style</Label>
+                    <Select value={selectedStyle} onValueChange={setSelectedStyle}>
                       <SelectTrigger id="mode-select" className="bg-background border-primary/20">
-                        <SelectValue placeholder="Select mode" />
+                        <SelectValue placeholder="Select style" />
                       </SelectTrigger>
                       <SelectContent className="bg-gaming-surface border-primary/20">
-                        <SelectItem value="Standard">Standard</SelectItem>
-                        <SelectItem value="85t">85 Tick</SelectItem>
-                        <SelectItem value="102t">102 Tick</SelectItem>
-                        <SelectItem value="128t">128 Tick</SelectItem>
-                        <SelectItem value="Source">Source</SelectItem>
-                        <SelectItem value="Bhop">Bhop</SelectItem>
-                        <SelectItem value="Custom">Custom</SelectItem>
+                          <SelectItem value="0">Normal</SelectItem>
+                          <SelectItem value="1">Low gravity</SelectItem>
+                          <SelectItem value="2">Sideways</SelectItem>
+                          <SelectItem value="3">Only W</SelectItem>
+                          <SelectItem value="4">400 Vel</SelectItem>
+                          <SelectItem value="5">High Gravity</SelectItem>
+                          <SelectItem value="6">Only A</SelectItem>
+                          <SelectItem value="7">Only D</SelectItem>
+                          <SelectItem value="8">Only S</SelectItem>
+                          <SelectItem value="9">Half Sideways</SelectItem>
+                          <SelectItem value="10">Fast Forward</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

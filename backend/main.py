@@ -448,15 +448,17 @@ def get_user_profile(
                 WITH player_last_finish AS (
                   SELECT
                     pr.MapName,
+                    pr.Style,
                     pr.SteamID,
                     MAX(CAST(pr.UnixStamp AS UNSIGNED)) AS LastFinished
                   FROM PlayerRecords pr
                   WHERE pr.SteamID = %s
-                  GROUP BY pr.MapName, pr.SteamID
+                  GROUP BY pr.MapName, pr.Style, pr.SteamID
                 ),
                 player_recent_rows AS (
                   SELECT
                     pr.MapName,
+                    pr.Style,
                     pr.SteamID,
                     pr.TimerTicks,
                     pr.FormattedTime,
@@ -464,25 +466,28 @@ def get_user_profile(
                   FROM PlayerRecords pr
                   JOIN player_last_finish lf
                     ON lf.MapName = pr.MapName
+                   AND lf.Style    = pr.Style
                    AND lf.SteamID = pr.SteamID
                    AND CAST(pr.UnixStamp AS UNSIGNED) = lf.LastFinished
                 ),
                 leaderboard_best AS (
                   SELECT
                     MapName,
+                    Style,
                     SteamID,
                     MIN(TimerTicks) AS BestTicks
                   FROM PlayerRecords
-                  GROUP BY MapName, SteamID
+                  GROUP BY MapName, Style, SteamID
                 ),
                 ranked AS (
                   SELECT
                     lb.*,
-                    DENSE_RANK() OVER (PARTITION BY lb.MapName ORDER BY lb.BestTicks ASC) AS pos
+                    DENSE_RANK() OVER (PARTITION BY lb.MapName, lb.Style ORDER BY lb.BestTicks ASC) AS pos
                   FROM leaderboard_best lb
                 )
                 SELECT
                   prr.MapName,
+                  prr.Style,
                   prr.TimerTicks,
                   prr.FormattedTime,
                   prr.LastFinished,
@@ -490,6 +495,7 @@ def get_user_profile(
                 FROM player_recent_rows prr
                 LEFT JOIN ranked r
                   ON r.MapName = prr.MapName
+                 AND r.Style    = prr.Style
                  AND r.SteamID = prr.SteamID
                 ORDER BY prr.LastFinished DESC
                 LIMIT %s;
@@ -502,34 +508,38 @@ def get_user_profile(
                 WITH player_best AS (
                   SELECT
                     MapName,
+                    Style,
                     SteamID,
                     MIN(TimerTicks) AS BestTicks,
                     MAX(CAST(UnixStamp AS UNSIGNED)) AS LastFinished
                   FROM PlayerRecords
                   WHERE SteamID = %s
-                  GROUP BY MapName, SteamID
+                  GROUP BY MapName, Style, SteamID
                 ),
                 leaderboard_best AS (
                   SELECT
                     MapName,
+                    Style,
                     SteamID,
                     MIN(TimerTicks) AS BestTicks
                   FROM PlayerRecords
-                  GROUP BY MapName, SteamID
+                  GROUP BY MapName, Style, SteamID
                 ),
                 ranked AS (
                   SELECT
                     lb.*,
-                    DENSE_RANK() OVER (PARTITION BY lb.MapName ORDER BY lb.BestTicks ASC) AS pos
+                    DENSE_RANK() OVER (PARTITION BY lb.MapName, lb.Style ORDER BY lb.BestTicks ASC) AS pos
                   FROM leaderboard_best lb
                 )
                 SELECT
                   pb.MapName,
+                  pb.Style,
                   pb.BestTicks AS TimerTicks,
                   (
                     SELECT pr3.FormattedTime
                     FROM PlayerRecords pr3
                     WHERE pr3.MapName = pb.MapName
+                      AND pr3.Style    = pb.Style
                       AND pr3.SteamID = pb.SteamID
                       AND pr3.TimerTicks = pb.BestTicks
                     ORDER BY CAST(pr3.UnixStamp AS UNSIGNED) DESC
@@ -540,6 +550,7 @@ def get_user_profile(
                 FROM player_best pb
                 JOIN ranked r
                   ON r.MapName = pb.MapName
+                 AND r.Style    = pb.Style
                  AND r.SteamID = pb.SteamID
                 WHERE r.pos <= 10
                 ORDER BY r.pos ASC, pb.BestTicks ASC, pb.MapName ASC

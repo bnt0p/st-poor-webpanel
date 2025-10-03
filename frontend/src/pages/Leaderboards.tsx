@@ -744,7 +744,6 @@ const Leaderboards = () => {
                           <SelectValue placeholder={t("leaderboards.selectStyle")} />
                         </SelectTrigger>
                         <SelectContent className="bg-gaming-surface border-primary/20">
-                          <SelectItem value="Standard">{t("leaderboards.standard")}</SelectItem>
                           <SelectItem value="0">Normal</SelectItem>
                           <SelectItem value="1">Low gravity</SelectItem>
                           <SelectItem value="2">Sideways</SelectItem>
@@ -806,7 +805,7 @@ const Leaderboards = () => {
                            Track: {selectedTrack === "0" ? "Main" : `Bonus ${selectedTrack}`}
                          </Badge>
                          <Badge variant="outline" className="border-primary/50">
-                           Mode: {selectedMode}
+                           Style: {selectedStyle}
                          </Badge>
                        </div>
                        {mapSearchResults.records.slice(0, 20).map((record, index) => (
@@ -938,7 +937,7 @@ const Leaderboards = () => {
                                   <span className="font-medium text-foreground">{record.PlayerName}</span>
                                 </div>
                                 <div className="text-sm text-muted-foreground">
-                                  {record.MapName} • {record.Mode}
+                                  {record.MapName} • {record.Mode} • {record.Style}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
                                   {new Date(record.UnixStamp * 1000).toLocaleString()}
