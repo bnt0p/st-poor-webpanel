@@ -43,21 +43,21 @@ Now, edit the `.env` file with your specific configuration:
 | Variable            | Description                                                                                                                                                             |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `STEAM_API_KEY`     | Your Steam Web API key.                                                                                                                                                 |
-| `DB_HOST_STEAM`     | Hostname/IP of the MySQL server for the **avatar cache** database.                                                                                                        |
-| `DB_PORT_STEAM`     | Port for the avatar cache MySQL server (e.g., `3306`).                                                                                                                   |
+| `DB_HOST_STEAM`     | Hostname/IP of the MySQL server for the **avatar cache**atabase.                                                                                                        |
+| `DB_PORT_STEAM`     | Port for the avatar cache MySQL server (e.g., `3306`)                                                                                                                   |
 | `DB_USER_STEAM`     | Username for the avatar cache database.                                                                                                                                 |
 | `DB_PASSWORD_STEAM` | Password for the avatar cache database.                                                                                                                                 |
 | `DB_NAME_STEAM`     | Name of the avatar cache database.                                                                                                                                      |
-| `DB_HOST_SURF`      | Hostname/IP of the MySQL server for your **SharpTimer** database.                                                                                                         |
+| `DB_HOST_SURF`      | Hostname/IP of the MySQL server for your **SharpTimer** database.                                                                                                       |
 | `DB_PORT_SURF`      | Port for the SharpTimer MySQL server.                                                                                                                                   |
 | `DB_USER_SURF`      | Username for the SharpTimer database.                                                                                                                                   |
 | `DB_PASSWORD_SURF`  | Password for the SharpTimer database.                                                                                                                                   |
 | `DB_NAME_SURF`      | Name of the SharpTimer database.                                                                                                                                        |
-| `TOKEN`             | (Optional) Your token for the ST-Global API for fetching external records. Apply at `https://st-global.net/apply`.                                                      |
-| `SERVER_LIST`       | A JSON array of your server IP:PORT strings. Example: `SERVER_LIST='["127.0.0.1:27015", "127.0.0.1:27016"]'`.                                                             |
-| `TZ`                | The timezone for the containers, e.g., `America/Sao_Paulo`.                                                                                                                      |
-| `VITE_API_URL`      | The public-facing URL for your backend API, e.g., `https://api.yourdomain.com`. You must set up a reverse proxy for this.                                                |
-| `DOMAIN_NAME`       | Your main domain name to be allowed by Vite for Cross-Origin Resource Sharing (CORS), e.g., `yourdomain.com`.                                                            |
+| `TOKEN`             | Your token for the ST-Global API for fetching external records. Apply at `https://st-global.net/apply`.                                                                 |
+| `SERVER_LIST`       | A JSON array of your server IP:PORT strings. Example: `SERVER_LIST='["127.0.0.1:27015", "127.0.0.1:27016"]'`.                                                           |
+| `TZ`                | The timezone for the containers, e.g., `America/Sao_Paulo`.                                                                                                             |
+| `VITE_API_URL`      | The public-facing URL for your backend API, e.g., `https://api.yourdomain.com`. You must set up a reverse proxy for this.                                               |
+| `DOMAIN_NAME`       | Your main domain name to be allowed by Vite for Cross-Origin Resource Sharing (CORS), e.g., `yourdomain.com`.                                                           |
 ```
 ### 3. Set up the Avatar Cache Database
 You need a separate database to cache Steam avatars. This reduces rate-limiting issues with the Steam API.
