@@ -15,7 +15,7 @@
   "leaderboards": {
     "title": "Global Leaderboards",
     "subtitle": "Top Performers",
-    "globalRanking": "Global Ranking",
+    "globalRanking": "Top server points",
     "playerName": "Player Name",
     "globalPoints": "Global Points",
     "totalRuns": "Total Runs",
@@ -36,7 +36,8 @@
     "date": "Date",
     "noRecordsFound": "No records found for this map",
     "enterMapName": "Enter a map name and select options to view records",
-    "globalMapRank": "Global rank per map"
+    "globalMapRank": "Global rank per map",
+    "backToLeaderboard": "Back to the leaderboard"
   },
   "profile": {
     "profileNotFound": "Profile Not Found",

@@ -133,7 +133,7 @@ const Profile = () => {
             </p>
             <Link to="/leaderboards">
               <Button>
-                🏆 Back to Leaderboards
+                🏆 {t("leaderboards.backToLeaderboard")}
               </Button>
             </Link>
           </CardContent>

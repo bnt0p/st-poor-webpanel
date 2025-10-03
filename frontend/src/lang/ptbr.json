@@ -15,7 +15,7 @@
   "leaderboards": {
     "title": "Ranking",
     "subtitle": "Melhores Jogadores",
-    "globalRanking": "Ranking de pontos",
+    "globalRanking": "Top pontos",
     "playerName": "Nome do Jogador",
     "globalPoints": "Pontos Globais",
     "totalRuns": "Total de Runs",
@@ -36,7 +36,8 @@
     "date": "Data",
     "noRecordsFound": "Nenhum recorde encontrado para este mapa",
     "enterMapName": "Digite o nome de um mapa e selecione as opções para ver os recordes",
-    "globalMapRank": "Rank GLOBAL por mapa"
+    "globalMapRank": "Rank GLOBAL por mapa",
+    "backToLeaderboard": "Voltar ao ranking"
   },
   "profile": {
     "profileNotFound": "Perfil Não Encontrado",
