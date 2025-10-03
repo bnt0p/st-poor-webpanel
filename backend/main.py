@@ -211,15 +211,16 @@ def get_map_records(
     limit: int = Query(10, ge=1, le=100),
     bonus: int = 0,
     mode: str = "Standard",
+    style: int = 0,
     steamid: int = 0,
 ):
     map_query = f"{mapy}_bonus{bonus}" if bonus > 0 else mapy
     sql = """
         SELECT *
         FROM PlayerRecords
-        WHERE MapName = %s AND Mode = %s
+        WHERE MapName = %s AND Mode = %s AND Style = %s
     """
-    params = [map_query, mode]
+    params = [map_query, mode, style]
 
     if steamid > 0:
         sql += " AND SteamID = %s "
@@ -239,9 +240,9 @@ def get_map_records(
                     """
                     SELECT MIN(TimerTicks) AS BestTicks
                     FROM PlayerRecords
-                    WHERE MapName = %s AND Mode = %s AND SteamID = %s;
+                    WHERE MapName = %s AND Mode = %s AND SteamID = %s AND Style = %s;
                     """,
-                    (map_query, mode, str(steamid)),
+                    (map_query, mode, str(steamid), style),
                 )
                 best_row = cur.fetchone() or {}
                 best_ticks = best_row.get("BestTicks")
@@ -253,12 +254,12 @@ def get_map_records(
                         FROM (
                           SELECT MIN(TimerTicks) AS BestTicks
                           FROM PlayerRecords
-                          WHERE MapName = %s AND Mode = %s
+                          WHERE MapName = %s AND Mode = %s AND Style = %s
                           GROUP BY SteamID
                         ) AS lb
                         WHERE lb.BestTicks < %s;
                         """,
-                        (map_query, mode, int(best_ticks)),
+                        (map_query, mode, style, int(best_ticks)),
                     )
                     pos_row = cur.fetchone() or {}
                     position = int(pos_row.get("Position") or 0)
@@ -266,11 +267,11 @@ def get_map_records(
                         """
                         SELECT FormattedTime
                         FROM PlayerRecords
-                        WHERE MapName = %s AND Mode = %s AND SteamID = %s AND TimerTicks = %s
+                        WHERE MapName = %s AND Mode = %s AND SteamID = %s AND TimerTicks = %s AND Style = %s
                         ORDER BY CAST(UnixStamp AS UNSIGNED) DESC
                         LIMIT 1;
                         """,
-                        (map_query, mode, str(steamid), int(best_ticks)),
+                        (map_query, mode, str(steamid), int(best_ticks), style),
                     )
                     fmt_row = cur.fetchone() or {}
                     best_formatted = fmt_row.get("FormattedTime")
@@ -450,16 +451,18 @@ def get_user_profile(
                   SELECT
                     pr.MapName,
                     pr.Mode,
+                    pr.Style,
                     pr.SteamID,
                     MAX(CAST(pr.UnixStamp AS UNSIGNED)) AS LastFinished
                   FROM PlayerRecords pr
                   WHERE pr.SteamID = %s AND pr.Mode = %s
-                  GROUP BY pr.MapName, pr.Mode, pr.SteamID
+                  GROUP BY pr.MapName, pr.Mode, pr.Style, pr.SteamID
                 ),
                 player_recent_rows AS (
                   SELECT
                     pr.MapName,
                     pr.Mode,
+                    pr.Style,
                     pr.SteamID,
                     pr.TimerTicks,
                     pr.FormattedTime,
@@ -468,6 +471,7 @@ def get_user_profile(
                   JOIN player_last_finish lf
                     ON lf.MapName = pr.MapName
                    AND lf.Mode    = pr.Mode
+                   AND lf.Style    = pr.Style
                    AND lf.SteamID = pr.SteamID
                    AND CAST(pr.UnixStamp AS UNSIGNED) = lf.LastFinished
                 ),
@@ -475,21 +479,23 @@ def get_user_profile(
                   SELECT
                     MapName,
                     Mode,
+                    Style,
                     SteamID,
                     MIN(TimerTicks) AS BestTicks
                   FROM PlayerRecords
                   WHERE Mode = %s
-                  GROUP BY MapName, Mode, SteamID
+                  GROUP BY MapName, Mode, Style, SteamID
                 ),
                 ranked AS (
                   SELECT
                     lb.*,
-                    DENSE_RANK() OVER (PARTITION BY lb.MapName, lb.Mode ORDER BY lb.BestTicks ASC) AS pos
+                    DENSE_RANK() OVER (PARTITION BY lb.MapName, lb.Mode, lb.Style ORDER BY lb.BestTicks ASC) AS pos
                   FROM leaderboard_best lb
                 )
                 SELECT
                   prr.MapName,
                   prr.Mode,
+                  prr.Style,
                   prr.TimerTicks,
                   prr.FormattedTime,
                   prr.LastFinished,
@@ -498,6 +504,7 @@ def get_user_profile(
                 LEFT JOIN ranked r
                   ON r.MapName = prr.MapName
                  AND r.Mode    = prr.Mode
+                 AND r.Style    = prr.Style
                  AND r.SteamID = prr.SteamID
                 ORDER BY prr.LastFinished DESC
                 LIMIT %s;
@@ -511,38 +518,42 @@ def get_user_profile(
                   SELECT
                     MapName,
                     Mode,
+                    Style,
                     SteamID,
                     MIN(TimerTicks) AS BestTicks,
                     MAX(CAST(UnixStamp AS UNSIGNED)) AS LastFinished
                   FROM PlayerRecords
                   WHERE SteamID = %s AND Mode = %s
-                  GROUP BY MapName, Mode, SteamID
+                  GROUP BY MapName, Mode, Style, SteamID
                 ),
                 leaderboard_best AS (
                   SELECT
                     MapName,
                     Mode,
+                    Style,
                     SteamID,
                     MIN(TimerTicks) AS BestTicks
                   FROM PlayerRecords
                   WHERE Mode = %s
-                  GROUP BY MapName, Mode, SteamID
+                  GROUP BY MapName, Mode, Style, SteamID
                 ),
                 ranked AS (
                   SELECT
                     lb.*,
-                    DENSE_RANK() OVER (PARTITION BY lb.MapName, lb.Mode ORDER BY lb.BestTicks ASC) AS pos
+                    DENSE_RANK() OVER (PARTITION BY lb.MapName, lb.Mode, lb.Style ORDER BY lb.BestTicks ASC) AS pos
                   FROM leaderboard_best lb
                 )
                 SELECT
                   pb.MapName,
                   pb.Mode,
+                  pb.Style,
                   pb.BestTicks AS TimerTicks,
                   (
                     SELECT pr3.FormattedTime
                     FROM PlayerRecords pr3
                     WHERE pr3.MapName = pb.MapName
                       AND pr3.Mode    = pb.Mode
+                      AND pr3.Style    = pb.Style
                       AND pr3.SteamID = pb.SteamID
                       AND pr3.TimerTicks = pb.BestTicks
                     ORDER BY CAST(pr3.UnixStamp AS UNSIGNED) DESC
@@ -554,6 +565,7 @@ def get_user_profile(
                 JOIN ranked r
                   ON r.MapName = pb.MapName
                  AND r.Mode    = pb.Mode
+                 AND r.Style    = pb.Style
                  AND r.SteamID = pb.SteamID
                 WHERE r.pos <= 10
                 ORDER BY r.pos ASC, pb.BestTicks ASC, pb.MapName ASC

@@ -78,6 +78,7 @@ const Profile = () => {
   const [selectedMap, setSelectedMap] = useState("");
   const [selectedTrack, setSelectedTrack] = useState("0");
   const [selectedMode, setSelectedMode] = useState("Standard");
+  const [selectedStyle, setSelectedStyle] = useState("0");
   const [mapSearchResults, setMapSearchResults] = useState<MapSearchResult[]>([]);
   const [mapSearchResponse, setMapSearchResponse] = useState<MapSearchResponse | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -171,6 +172,10 @@ const Profile = () => {
       if (selectedMode !== "Standard") {
         url += `&mode=${selectedMode}`;
       }
+
+      if (selectedStyle !== "0") {
+        url += `&style=${selectedStyle}`;
+      }
       
       const response = await fetch(url);
       if (!response.ok) {
@@ -201,7 +206,7 @@ const Profile = () => {
                 🏄‍♂️ {t("index.title")}
               </Link>
               <Badge variant="outline" className="border-green-500/50 text-green-400 bg-green-500/10 animate-pulse">
-                🟢 {t("common.online")}: 64/64
+                🟢 {t("common.online")}
               </Badge>
             </div>
             <div className="flex items-center gap-4">
@@ -303,7 +308,7 @@ const Profile = () => {
                           </div>
                           <div>
                             <p className="font-medium text-foreground">{map.MapName}</p>
-                            <p className="text-sm text-muted-foreground">{map.Mode} • {formatDate(map.LastFinished)}</p>
+                            <p className="text-sm text-muted-foreground">{map.Mode} • Style: {map.Style} • {formatDate(map.LastFinished)}</p>
                           </div>
                         </div>
                         <div className="text-right">
@@ -345,7 +350,7 @@ const Profile = () => {
                           </div>
                           <div>
                             <p className="font-medium text-foreground">{record.MapName}</p>
-                            <p className="text-sm text-muted-foreground">{record.Mode} • {formatDate(record.LastFinished)}</p>
+                            <p className="text-sm text-muted-foreground">{record.Mode} • Style: {record.Style} • {formatDate(record.LastFinished)}</p>
                           </div>
                         </div>
                         <div className="text-right">
@@ -413,6 +418,27 @@ const Profile = () => {
                         <SelectItem value="Source">Source</SelectItem>
                         <SelectItem value="Bhop">Bhop</SelectItem>
                         <SelectItem value="Custom">Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="style-select" className="text-sm font-medium text-foreground">{t("leaderboards.selectStyle")}</Label>
+                    <Select value={selectedStyle} onValueChange={setSelectedStyle}>
+                      <SelectTrigger id="style-select" className="bg-background border-primary/20">
+                        <SelectValue placeholder={t("leaderboards.selectStyle")} />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gaming-surface border-primary/20">
+                        <SelectItem value="0">Normal</SelectItem>
+                        <SelectItem value="1">Low gravity</SelectItem>
+                        <SelectItem value="2">Sideways</SelectItem>
+                        <SelectItem value="3">Only W</SelectItem>
+                        <SelectItem value="4">400 Vel</SelectItem>
+                        <SelectItem value="5">High Gravity</SelectItem>
+                        <SelectItem value="6">Only A</SelectItem>
+                        <SelectItem value="7">Only D</SelectItem>
+                        <SelectItem value="8">Only S</SelectItem>
+                        <SelectItem value="9">Half Sideways</SelectItem>
+                        <SelectItem value="10">Fast Forward</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

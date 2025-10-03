@@ -69,69 +69,6 @@ interface SearchResponse {
   matches: SearchPlayer[];
 }
 
-// Mock map leaderboard data
-const mapLeaderboard = [
-  { 
-    rank: 1, 
-    steamId: "76561198001234567", 
-    name: "ProSurfer123", 
-    avatar: "https://avatars.steamstatic.com/b5bd56c1aa4644a474a2e4972be27ef9e82e517e_full.jpg",
-    time: "0:45.23", 
-    completions: 342,
-    country: "🇺🇸",
-    track: "Main",
-    style: "Normal",
-    mode: "Standard"
-  },
-  { 
-    rank: 2, 
-    steamId: "76561198001234568", 
-    name: "SpeedDemon", 
-    avatar: "https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg",
-    time: "0:47.89", 
-    completions: 278,
-    country: "🇩🇪",
-    track: "Main",
-    style: "Normal",
-    mode: "Standard"
-  },
-  { 
-    rank: 3, 
-    steamId: "76561198001234569", 
-    name: "WaveRider", 
-    avatar: "https://avatars.steamstatic.com/c5d56249ee5d28a07db4ac9f7f60af961fab5426_full.jpg",
-    time: "0:49.12", 
-    completions: 201,
-    country: "🇬🇧",
-    track: "Main",
-    style: "Normal",
-    mode: "Standard"
-  },
-  { 
-    rank: 4, 
-    steamId: "76561198001234570", 
-    name: "SurfLegend", 
-    avatar: "https://avatars.steamstatic.com/b5bd56c1aa4644a474a2e4972be27ef9e82e517e_full.jpg",
-    time: "0:51.67", 
-    completions: 189,
-    country: "🇫🇷",
-    track: "Main",
-    style: "Normal",
-    mode: "Standard"
-  },
-  { 
-    rank: 5, 
-    steamId: "76561198001234571", 
-    name: "AerialAce", 
-    avatar: "https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_full.jpg",
-    time: "0:53.45", 
-    completions: 156,
-    country: "🇨🇦",
-    track: "Main",
-    style: "Normal",
-    mode: "Standard"
-  }
-];
 
 const Leaderboards = () => {
   const { t } = useTranslation();
@@ -301,7 +238,7 @@ const Leaderboards = () => {
       }
       
       if (selectedStyle !== "0") {
-        params.push(`Style=${selectedStyle}`);
+        params.push(`style=${selectedStyle}`);
       }
       
       if (params.length > 0) {
@@ -342,7 +279,24 @@ const Leaderboards = () => {
       }
       
       if (selectedStyle !== "0") {
-        params.push(`Style=${selectedStyle}`);
+        let styleValue;
+
+        switch (selectedStyle) {
+          case "0": styleValue = "Normal"; break;
+          case "1": styleValue = "Low gravity"; break;
+          case "2": styleValue = "Sideways"; break;
+          case "3": styleValue = "Only W"; break;
+          case "4": styleValue = "400 Vel"; break;
+          case "5": styleValue = "High Gravity"; break;
+          case "6": styleValue = "Only A"; break;
+          case "7": styleValue = "Only D"; break;
+          case "8": styleValue = "Only S"; break;
+          case "9": styleValue = "Half Sideways"; break;
+          case "10": styleValue = "Fast Forward"; break;
+          default: styleValue = selectedStyle;
+        }
+
+        params.push(`style=${styleValue}`);
       }
       
       if (params.length > 0) {
@@ -743,26 +697,27 @@ const Leaderboards = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    {/* <div>
-                      <Label>{t("leaderboards.selectStyle")}</Label>
+                    <div>
+                      <Label htmlFor="style-select" className="text-sm font-medium text-foreground">{t("leaderboards.selectStyle")}</Label>
                       <Select value={selectedStyle} onValueChange={setSelectedStyle}>
-                        <SelectTrigger className="bg-background border-primary/20">
-                          <SelectValue />
+                        <SelectTrigger id="style-select" className="bg-background border-primary/20">
+                          <SelectValue placeholder={t("leaderboards.selectStyle")} />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-gaming-surface border-primary/20">
                           <SelectItem value="0">Normal</SelectItem>
-                          <SelectItem value="1">Sideways</SelectItem>
-                          <SelectItem value="2">Half-Sideways</SelectItem>
-                          <SelectItem value="3">Backwards</SelectItem>
-                          <SelectItem value="4">Low-Gravity</SelectItem>
-                          <SelectItem value="5">Slow Motion</SelectItem>
-                          <SelectItem value="6">Fast Forward</SelectItem>
-                          <SelectItem value="7">A-Only</SelectItem>
-                          <SelectItem value="8">D-Only</SelectItem>
-                          <SelectItem value="9">W-Only</SelectItem>
+                          <SelectItem value="1">Low gravity</SelectItem>
+                          <SelectItem value="2">Sideways</SelectItem>
+                          <SelectItem value="3">Only W</SelectItem>
+                          <SelectItem value="4">400 Vel</SelectItem>
+                          <SelectItem value="5">High Gravity</SelectItem>
+                          <SelectItem value="6">Only A</SelectItem>
+                          <SelectItem value="7">Only D</SelectItem>
+                          <SelectItem value="8">Only S</SelectItem>
+                          <SelectItem value="9">Half Sideways</SelectItem>
+                          <SelectItem value="10">Fast Forward</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div> */}
+                    </div>
                     <div>
                       <Label>{t("leaderboards.selectMode")}</Label>
                       <Select value={selectedMode} onValueChange={setSelectedMode}>
@@ -792,7 +747,7 @@ const Leaderboards = () => {
                           Track: {globalMapLeaderboard.searchedTrack === "0" ? "Main" : `Bonus ${globalMapLeaderboard.searchedTrack}`}
                         </Badge>
                         <Badge variant="outline" className="border-primary/50">
-                          Style: {globalMapLeaderboard.searchedStyle === "0" ? "Normal" : `Style ${globalMapLeaderboard.searchedStyle}`}
+                          Style: {globalMapLeaderboard.searchedStyle === "0" ? "Normal" : `${globalMapLeaderboard.searchedStyle}`}
                         </Badge>
                         <Badge variant="outline" className="border-primary/50">
                           Mode: {globalMapLeaderboard.searchedMode}
@@ -814,7 +769,7 @@ const Leaderboards = () => {
                             <div>
                               <div className="font-medium text-foreground">{record.player_name}</div>
                               <div className="text-sm text-muted-foreground">
-                                {globalMapLeaderboard.searchedMap} • {globalMapLeaderboard.searchedMode}
+                                {globalMapLeaderboard.searchedMap} • {globalMapLeaderboard.searchedMode} • Style: {globalMapLeaderboard.searchedStyle}
                               </div>
                             </div>
                           </div>
@@ -825,7 +780,7 @@ const Leaderboards = () => {
                               </div>
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {record.replay ? '🎬 has replay' : 'has no replay'}
+                              {record.replay ? '🎬 has replay' : 'no replay'}
                             </div>
                           </div>
                         </div>
@@ -931,6 +886,27 @@ const Leaderboards = () => {
                         </SelectContent>
                       </Select>
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="style-select" className="text-sm font-medium text-foreground">{t("leaderboards.selectStyle")}</Label>
+                      <Select value={selectedStyle} onValueChange={setSelectedStyle}>
+                        <SelectTrigger id="style-select" className="bg-background border-primary/20">
+                          <SelectValue placeholder={t("leaderboards.selectStyle")} />
+                        </SelectTrigger>
+                        <SelectContent className="bg-gaming-surface border-primary/20">
+                          <SelectItem value="0">Normal</SelectItem>
+                          <SelectItem value="1">Low gravity</SelectItem>
+                          <SelectItem value="2">Sideways</SelectItem>
+                          <SelectItem value="3">Only W</SelectItem>
+                          <SelectItem value="4">400 Vel</SelectItem>
+                          <SelectItem value="5">High Gravity</SelectItem>
+                          <SelectItem value="6">Only A</SelectItem>
+                          <SelectItem value="7">Only D</SelectItem>
+                          <SelectItem value="8">Only S</SelectItem>
+                          <SelectItem value="9">Half Sideways</SelectItem>
+                          <SelectItem value="10">Fast Forward</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="space-y-2 flex flex-col justify-end">
                       <Button 
                         onClick={handleMapSearch}
@@ -1010,7 +986,7 @@ const Leaderboards = () => {
                                  </div>
                                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                    <span>Completions: {record.TimesFinished}</span>
-                                   <span>{record.MapName} • {record.Mode}</span>
+                                   <span>{record.MapName} • {record.Mode} • Style: {record.Style}</span>
                                  </div>
                                </div>
                              </div>
@@ -1110,7 +1086,7 @@ const Leaderboards = () => {
                                   <span className="font-medium text-foreground">{record.PlayerName}</span>
                                 </div>
                                 <div className="text-sm text-muted-foreground">
-                                  {record.MapName} • {record.Mode}
+                                  {record.MapName} • {record.Mode} • Style: {record.Style}
                                 </div>
                                 <div className="text-xs text-muted-foreground">
                                   {new Date(record.UnixStamp * 1000).toLocaleString()}
