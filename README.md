@@ -67,7 +67,7 @@ Now, edit the `.env` file with your specific configuration:
 | `TZ`                | The timezone for the containers, e.g., `America/Sao_Paulo`.                                                                                                             |
 | `VITE_API_URL`      | The public-facing URL for your backend API, e.g., `https://api.yourdomain.com`. You must set up a reverse proxy for this.                                               |
 | `DOMAIN_NAME`       | Your main domain name to be allowed by Vite for Cross-Origin Resource Sharing (CORS), e.g., `yourdomain.com`.                                                           |
------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 ```
 ### 3. Set up the Avatar Cache Database
 You need a separate database to cache Steam avatars. This reduces rate-limiting issues with the Steam API.
