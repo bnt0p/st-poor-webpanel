@@ -201,7 +201,7 @@ const Profile = () => {
                 🏄‍♂️ {t("index.title")}
               </Link>
               <Badge variant="outline" className="border-green-500/50 text-green-400 bg-green-500/10 animate-pulse">
-                🟢 {t("common.online")}: 64/64
+                🟢 {t("common.online")}
               </Badge>
             </div>
             <div className="flex items-center gap-4">
