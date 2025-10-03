@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 import a2s
 from typing import Dict, List, Optional, Any
 import pymysql
-import requestsF
+import requests
 import os
 import os, json, httpx
 from httpx import Timeout
