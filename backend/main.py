@@ -14,12 +14,10 @@ from httpx import Timeout
 SERVERS = json.loads(os.environ['SERVER_LIST'])
 API_ENDPOINT = "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2/"
 MAPS_URL = "https://stglobal-webpanel.vercel.app/api/maps"
-SORT_URL = "https://stglobalapi.azurewebsites.net/api/Records/Sort"
 
 TTL_SECONDS = int(os.environ.get("AVATAR_CACHE_TTL_SECONDS", "86400"))  # 24h
 STEAM_API_KEY = os.getenv("STEAM_API_KEY")
 MAPS_BODY = {"tier": 0, "limit": 999999}
-token = os.getenv("TOKEN")
 POLL_MS = 10_000
 TIMEOUT_S = 3.0
 
@@ -211,15 +209,17 @@ def get_map_records(
     limit: int = Query(10, ge=1, le=100),
     bonus: int = 0,
     mode: str = "Standard",
+    style: int = 0,
     steamid: int = 0,
 ):
+    print(style)
     map_query = f"{mapy}_bonus{bonus}" if bonus > 0 else mapy
     sql = """
         SELECT *
         FROM PlayerRecords
-        WHERE MapName = %s
+        WHERE MapName = %s AND Style = %s
     """
-    params = [map_query]
+    params = [map_query, style]
 
     if steamid > 0:
         sql += " AND SteamID = %s "
@@ -227,7 +227,6 @@ def get_map_records(
 
     sql += " ORDER BY TimerTicks ASC LIMIT %s"
     params.append(limit)
-
     try:
         with _db_surf() as conn, conn.cursor() as cur:
             cur.execute(sql, params)
@@ -239,9 +238,9 @@ def get_map_records(
                     """
                     SELECT MIN(TimerTicks) AS BestTicks
                     FROM PlayerRecords
-                    WHERE MapName = %s AND SteamID = %s;
+                    WHERE MapName = %s AND SteamID = %s AND Style = %s;
                     """,
-                    (map_query, str(steamid)),
+                    (map_query, str(steamid), style),
                 )
                 best_row = cur.fetchone() or {}
                 best_ticks = best_row.get("BestTicks")
@@ -253,12 +252,12 @@ def get_map_records(
                         FROM (
                           SELECT MIN(TimerTicks) AS BestTicks
                           FROM PlayerRecords
-                          WHERE MapName = %s
+                          WHERE MapName = %s AND Style = %s
                           GROUP BY SteamID
                         ) AS lb
                         WHERE lb.BestTicks < %s;
                         """,
-                        (map_query, int(best_ticks)),
+                        (map_query, style, int(best_ticks)),
                     )
                     pos_row = cur.fetchone() or {}
                     position = int(pos_row.get("Position") or 0)
@@ -266,11 +265,11 @@ def get_map_records(
                         """
                         SELECT FormattedTime
                         FROM PlayerRecords
-                        WHERE MapName = %s AND SteamID = %s AND TimerTicks = %s
+                        WHERE MapName = %s AND SteamID = %s AND TimerTicks = %s AND Style = %s
                         ORDER BY CAST(UnixStamp AS UNSIGNED) DESC
                         LIMIT 1;
                         """,
-                        (map_query, str(steamid), int(best_ticks)),
+                        (map_query, str(steamid), int(best_ticks), style),
                     )
                     fmt_row = cur.fetchone() or {}
                     best_formatted = fmt_row.get("FormattedTime")
@@ -562,68 +561,6 @@ def get_user_profile(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Profile build failed: {e}")
-
-@app.get("/surf/top-external/{map_name}")
-async def get_external_top_for_map(
-    map_name: str,
-    mode: str = Query("Standard"),
-    style: str = Query("Normal"),
-    bonus: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1, le=100),
-):
-    if not token:
-        raise HTTPException(status_code=401, detail="Missing x-secret-key header (or STGLOBAL_SECRET env).")
-
-    timeout = Timeout(connect=10.0, read=20.0, write=10.0, pool=5.0)
-
-    maps = None
-    last_err = None
-    async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
-        for attempt in range(3):
-            try:
-                r = await client.post(MAPS_URL, json=MAPS_BODY, headers={"accept": "application/json"})
-                if r.status_code != 200:
-                    last_err = {"phase": "fetch_maps", "status": r.status_code, "body": r.text[:500]}
-                else:
-                    js = r.json()
-                    maps = js.get("data", [])
-                    break
-            except Exception as e:
-                last_err = {"phase": "fetch_maps", "error": str(e)}
-        if maps is None:
-            raise HTTPException(status_code=502, detail=last_err or {"phase": "fetch_maps", "error": "unknown"})
-
-    target = map_name.strip().lower()
-    map_obj = next((m for m in maps if str(m.get("name", "")).lower() == target), None)
-    if not map_obj:
-        partials = [m for m in maps if target in str(m.get("name", "")).lower()]
-        map_obj = partials[0] if partials else None
-    if not map_obj or "id" not in map_obj:
-        suggestions = []
-        if 'partials' in locals():
-            suggestions = [m.get("name") for m in partials][:5]
-        raise HTTPException(status_code=404, detail={"error": f"Map '{map_name}' not found", "suggestions": suggestions})
-
-    map_id = map_obj["id"]
-
-    sort_body = {"map_id": map_id, "style": style, "bonus": bonus, "limit": limit}
-    headers = {"x-secret-key": token, "content-type": "application/json", "accept": "application/json"}
-
-    async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
-        try:
-            r = await client.post(SORT_URL, headers=headers, json=sort_body)
-        except Exception as e:
-            raise HTTPException(status_code=502, detail={"phase": "sort_records", "error": str(e)})
-
-        if r.status_code != 200:
-            # Bubble up remote error body
-            try:
-                body = r.json()
-            except Exception:
-                body = r.text
-            raise HTTPException(status_code=502, detail={"phase": "sort_records", "status": r.status_code, "body": body})
-
-        return r.json()
 
 @app.on_event("startup")
 async def on_start():

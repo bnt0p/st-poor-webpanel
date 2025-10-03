@@ -301,7 +301,7 @@ const Leaderboards = () => {
       }
       
       if (selectedStyle !== "0") {
-        params.push(`Style=${selectedStyle}`);
+        params.push(`style=${selectedStyle}`);
       }
       
       if (params.length > 0) {
@@ -606,15 +606,12 @@ const Leaderboards = () => {
         {/* Leaderboard Tabs */}
         <TooltipProvider>
           <Tabs defaultValue="recent" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-[1000px] mx-auto bg-gaming-surface border border-primary/20">
+            <TabsList className="grid w-full grid-cols-3 lg:w-[1000px] mx-auto bg-gaming-surface border border-primary/20">
               <TabsTrigger value="recent" className="data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground">
                 📈 Recent Records
               </TabsTrigger>
               <TabsTrigger value="maps" className="data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground">
                 🗺️ {t("leaderboards.mapLeaderboards")}
-              </TabsTrigger>
-              <TabsTrigger value="global-maps" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                🌍 {t("leaderboards.globalMapRank")}
               </TabsTrigger>
               <TabsTrigger value="points" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 🏆 {t("leaderboards.globalRanking")}
@@ -696,180 +693,6 @@ const Leaderboards = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="global-maps" className="animate-fade-in">
-              <Card className="bg-gradient-card border-primary/20 shadow-card">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-bold text-foreground">
-                    🌍 {t("leaderboards.globalMapRank")}
-                  </CardTitle>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
-                    <div>
-                      <Label>{t("leaderboards.selectMap")}</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="surf_aura, surf_boreas..."
-                          value={selectedMap}
-                          onChange={(e) => setSelectedMap(e.target.value)}
-                          className="flex-1 bg-background border-primary/20"
-                        />
-                        <Button 
-                          onClick={handleGlobalMapSearch}
-                          disabled={isSearchingGlobalMap || !selectedMap}
-                          size="sm"
-                          className="bg-primary hover:bg-primary/80"
-                        >
-                          {isSearchingGlobalMap ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </div>
-                    <div>
-                      <Label>{t("leaderboards.selectTrack")}</Label>
-                      <Select value={selectedTrack} onValueChange={setSelectedTrack}>
-                        <SelectTrigger className="bg-background border-primary/20">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0">Main</SelectItem>
-                          <SelectItem value="1">Bonus 1</SelectItem>
-                          <SelectItem value="2">Bonus 2</SelectItem>
-                          <SelectItem value="3">Bonus 3</SelectItem>
-                          <SelectItem value="4">Bonus 4</SelectItem>
-                          <SelectItem value="5">Bonus 5</SelectItem>
-                          <SelectItem value="6">Bonus 6</SelectItem>
-                          <SelectItem value="7">Bonus 7</SelectItem>
-                          <SelectItem value="8">Bonus 8</SelectItem>
-                          <SelectItem value="9">Bonus 9</SelectItem>
-                          <SelectItem value="10">Bonus 10</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {/* <div>
-                      <Label>{t("leaderboards.selectStyle")}</Label>
-                      <Select value={selectedStyle} onValueChange={setSelectedStyle}>
-                        <SelectTrigger className="bg-background border-primary/20">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="0">Normal</SelectItem>
-                          <SelectItem value="1">Sideways</SelectItem>
-                          <SelectItem value="2">Half-Sideways</SelectItem>
-                          <SelectItem value="3">Backwards</SelectItem>
-                          <SelectItem value="4">Low-Gravity</SelectItem>
-                          <SelectItem value="5">Slow Motion</SelectItem>
-                          <SelectItem value="6">Fast Forward</SelectItem>
-                          <SelectItem value="7">A-Only</SelectItem>
-                          <SelectItem value="8">D-Only</SelectItem>
-                          <SelectItem value="9">W-Only</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div> */}
-                    <div>
-                      <Label>{t("leaderboards.selectMode")}</Label>
-                      <Select value={selectedMode} onValueChange={setSelectedMode}>
-                        <SelectTrigger className="bg-background border-primary/20">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Standard">Standard</SelectItem>
-                          <SelectItem value="85t">85t</SelectItem>
-                          <SelectItem value="102t">102t</SelectItem>
-                          <SelectItem value="128t">128t</SelectItem>
-                          <SelectItem value="Source">Source</SelectItem>
-                          <SelectItem value="Bhop">Bhop</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {globalMapLeaderboard && globalMapLeaderboard.data && globalMapLeaderboard.data.length > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Badge variant="outline" className="border-primary/50">
-                          Map: {globalMapLeaderboard.searchedMap || selectedMap}
-                        </Badge>
-                        <Badge variant="outline" className="border-primary/50">
-                          Track: {globalMapLeaderboard.searchedTrack === "0" ? "Main" : `Bonus ${globalMapLeaderboard.searchedTrack}`}
-                        </Badge>
-                        <Badge variant="outline" className="border-primary/50">
-                          Style: {globalMapLeaderboard.searchedStyle === "0" ? "Normal" : `Style ${globalMapLeaderboard.searchedStyle}`}
-                        </Badge>
-                        <Badge variant="outline" className="border-primary/50">
-                          Mode: {globalMapLeaderboard.searchedMode}
-                        </Badge>
-                      </div>
-                      {globalMapLeaderboard.data.slice(0, 20).map((record, index) => (
-                        <div className={`flex items-center justify-between p-4 rounded-lg border transition-all duration-200 hover-scale hover:border-primary/40 cursor-pointer ${
-                          index < 3 ? 'bg-primary/5 border-primary/20' : 'bg-gaming-surface border-primary/10'
-                        }`}>
-                          <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                              index === 0 ? 'bg-yellow-500/20 text-yellow-400' :
-                              index === 1 ? 'bg-gray-500/20 text-gray-300' :
-                              index === 2 ? 'bg-orange-500/20 text-orange-400' :
-                              'bg-primary/10 text-primary'
-                            }`}>
-                              {index < 3 ? ['🥇', '🥈', '🥉'][index] : `#${index + 1}`}
-                            </div>
-                            <div>
-                              <div className="font-medium text-foreground">{record.player_name}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {globalMapLeaderboard.searchedMap} • {globalMapLeaderboard.searchedMode}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-6">
-                            <div className="text-right">
-                              <div className="font-mono text-lg font-bold text-primary">
-                                {formatTime(record.time)}
-                              </div>
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {record.replay ? '🎬 has replay' : 'has no replay'}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  
-                  {globalMapLeaderboard && globalMapLeaderboard.data && globalMapLeaderboard.data.length === 0 && !isSearchingGlobalMap && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      {t("leaderboards.noRecordsFound")}
-                    </div>
-                  )}
-                  
-                  {!globalMapLeaderboard && !isSearchingGlobalMap && selectedMap && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Click search to view leaderboard
-                    </div>
-                  )}
-                  
-                  {!selectedMap && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Select a map to view leaderboard
-                    </div>
-                  )}
-                  
-                  {isSearchingGlobalMap && (
-                    <div className="space-y-3">
-                      {Array.from({ length: 20 }, (_, index) => (
-                        <div key={index} className="flex items-center gap-4 p-4 rounded-lg border bg-gaming-surface border-primary/10">
-                          <Skeleton className="w-10 h-10 rounded-full" />
-                          <div className="flex-1 space-y-2">
-                            <Skeleton className="h-4 w-32" />
-                            <Skeleton className="h-3 w-48" />
-                          </div>
-                          <Skeleton className="h-4 w-20" />
-                          <Skeleton className="h-4 w-24" />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
             <TabsContent value="maps" className="animate-fade-in">
               <Card className="bg-gradient-card border-secondary/20 shadow-card">
                 <CardHeader>
@@ -915,19 +738,24 @@ const Leaderboards = () => {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="mode-select" className="text-sm font-medium text-foreground">{t("leaderboards.selectMode")}</Label>
-                      <Select value={selectedMode} onValueChange={setSelectedMode}>
+                      <Label htmlFor="mode-select" className="text-sm font-medium text-foreground">{t("leaderboards.selectStyle")}</Label>
+                      <Select value={selectedStyle} onValueChange={setSelectedStyle}>
                         <SelectTrigger id="mode-select" className="bg-background border-primary/20">
-                          <SelectValue placeholder={t("leaderboards.selectMode")} />
+                          <SelectValue placeholder={t("leaderboards.selectStyle")} />
                         </SelectTrigger>
                         <SelectContent className="bg-gaming-surface border-primary/20">
                           <SelectItem value="Standard">{t("leaderboards.standard")}</SelectItem>
-                          <SelectItem value="85t">85t</SelectItem>
-                          <SelectItem value="102t">102t</SelectItem>
-                          <SelectItem value="128t">128t</SelectItem>
-                          <SelectItem value="Source">Source</SelectItem>
-                          <SelectItem value="Bhop">Bhop</SelectItem>
-                          <SelectItem value="Custom">Custom</SelectItem>
+                          <SelectItem value="0">Normal</SelectItem>
+                          <SelectItem value="1">Low gravity</SelectItem>
+                          <SelectItem value="2">Sideways</SelectItem>
+                          <SelectItem value="3">Only W</SelectItem>
+                          <SelectItem value="4">400 Vel</SelectItem>
+                          <SelectItem value="5">High Gravity</SelectItem>
+                          <SelectItem value="6">Only A</SelectItem>
+                          <SelectItem value="7">Only D</SelectItem>
+                          <SelectItem value="8">Only S</SelectItem>
+                          <SelectItem value="9">Half Sideways</SelectItem>
+                          <SelectItem value="10">Fast Forward</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

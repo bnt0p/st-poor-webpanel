@@ -20,7 +20,6 @@ services:
       DB_USER_SURF: ${DB_USER_SURF:?DB_USER_SURF var is required. Please check the docs.}
       DB_PASSWORD_SURF: ${DB_PASSWORD_SURF:?DB_PASSWORD_SURF var is required. Please check the docs.}
       DB_NAME_SURF: ${DB_NAME_SURF:?DB_NAME_SURF var is required. Please check the docs.}
-      TOKEN: ${TOKEN:?TOKEN var is required. Please check the docs.}
       SERVER_LIST: ${SERVER_LIST:?SERVER_LIST var is required. Please check the docs.}
 
   frontend:
