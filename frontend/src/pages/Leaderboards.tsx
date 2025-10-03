@@ -485,11 +485,6 @@ const Leaderboards = () => {
           </div>
         </div>
       </header>
-              <Link to="/maps">
-                <Button variant="outline" size="sm" className="border-secondary/50 hover:bg-secondary/10">
-                  🗺️ {t("maps.title")}
-                </Button>
-              </Link>
       <div className="max-w-7xl mx-auto p-6">
         {/* Header */}
         <div className="mb-8 text-center">
