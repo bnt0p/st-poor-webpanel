@@ -1,5 +1,6 @@
 # CS2 Surf Web Panel
 
+### ATTENTION THIS IS CODED TO SUPPORT SHARPTIMER DEV BRANCH!, IT WILL NOT WORK PROPERLY WITH 0.3.1x.
 A comprehensive, self-hostable web panel for Counter-Strike 2 surf servers running the [SharpTimer](https://github.com/Letaryat/poor-sharptimer) plugin. 
 
 The application is fully containerized with Docker, making deployment straightforward.
