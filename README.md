@@ -4,6 +4,11 @@ A comprehensive, self-hostable web panel for Counter-Strike 2 surf servers runni
 
 The application is fully containerized with Docker, making deployment straightforward.
 
+# NOTES
+this project started as a personal project for my server [rage.surf](https://rage.surf), which I hardcoded to it and just adapted to release public, some features may be bad coded, not work as expected, etc. Feel free to contribute to it with PR.
+
+LIVE PREVIEW: https://rage.surf
+
 ## Features
 
 - **Live Server Browser:** View a list of your game servers with real-time player counts, current map, and server status.
@@ -128,3 +133,6 @@ The frontend will be accessible at `http://127.0.0.1:4175`. You should configure
 ├── Dockerfile.frontend # Dockerfile for the frontend
 ├── compose.yml         # Docker Compose file for orchestration
 └── .env.example      # Example environment configuration
+```
+
+This project is under GNU General Public License v3.0. Refer to LICENSE.md.
