@@ -9,6 +9,10 @@ this project started as a personal project for my server [rage.surf](https://rag
 
 LIVE PREVIEW: https://rage.surf
 
+_I plan to add updates to it, if you want to discuss ideas, hop on this DC server: https://discord.gg/SS2fRuxupm and we can discuss the future of this poor panel xD_
+<img width="1281" height="1347" alt="image" src="https://github.com/user-attachments/assets/f70dbf43-fbc2-4b30-a1c8-66c3cfa3f7e0" />
+
+
 ## Features
 
 - **Live Server Browser:** View a list of your game servers with real-time player counts, current map, and server status.
@@ -105,6 +109,13 @@ Build and run the Docker containers:
 docker compose up --build -d
 ```
 The frontend will be accessible at `http://127.0.0.1:4175`. You should configure your web server to reverse proxy to this address.
+
+## I see the project updated. How do I update it too?
+
+Just run `git pull` where you cloned it, and rerun the docker structure. No need to reload/restart nginx or your reverse proxy handler.
+```
+docker compose up -d --build --force-recreate
+```
 
 ## Project Structure
 
