@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 jobs:
-  release-031y:
+  release-031x:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout 0.3.1x
