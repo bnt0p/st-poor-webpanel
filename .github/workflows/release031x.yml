@@ -1,43 +1,80 @@
-name: Release 0.3.1x
+name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to release (e.g., 0.3.1x or 0.3.1y)"
+        required: true
+        default: "0.3.1y"
 
 permissions:
   contents: write
 
 jobs:
-  release-031x:
+  release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout 0.3.1x
+      - name: Checkout workflow repo (default branch)
         uses: actions/checkout@v4
         with:
-          ref: 0.3.1x
           fetch-depth: 0
+
+      - name: Fetch target branch
+        run: |
+          git fetch origin "${{ github.event.inputs.branch }}:${{ github.event.inputs.branch }}"
+
+      - name: Switch to target branch
+        run: git checkout "${{ github.event.inputs.branch }}"
+
+      - name: Configure git (for tagging)
+        run: |
+          git config user.name  "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
 
       - name: Fetch tags
         run: git fetch --tags --force
 
-      - name: Compute next version tag (per-branch)
+      - name: Resolve branch HEAD SHA
+        id: head
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Compute next version tag (per-branch suffix)
         id: version
         shell: bash
         run: |
           set -euo pipefail
-          VERSION_PREFIX="v"
-          LAST=$(git tag --list "${VERSION_PREFIX}[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n1 || true)
+          BRANCH="${{ github.event.inputs.branch }}"
+          PREFIX="v"
+          SUFFIX="-${BRANCH}"   # ensures independent version streams per branch
+
+          # Find latest tag matching vMAJ.MIN.PAT-<branch>
+          LAST=$(
+            git tag -l "${PREFIX}[0-9]*.[0-9]*.[0-9]*${SUFFIX}" \
+            | sed -n "s/^${PREFIX}\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\)${SUFFIX}$/\1.\2.\3/p" \
+            | sort -V | tail -1
+          )
+
           if [[ -z "${LAST}" ]]; then
-            NEW="${VERSION_PREFIX}1.0.0"
+            MA=1; MI=0; PA=0
             RANGE="HEAD"
           else
-            V=${LAST#${VERSION_PREFIX}}
-            IFS='.' read -r MA MI PA <<<"$V"
+            IFS='.' read -r MA MI PA <<< "${LAST}"
             PA=$((PA+1))
-            NEW="${VERSION_PREFIX}${MA}.${MI}.${PA}"
-            RANGE="${LAST}..HEAD"
+            RANGE="v${LAST}${SUFFIX}..HEAD"
           fi
-          echo "new_tag=${NEW}" >> "$GITHUB_OUTPUT"
-          echo "range=${RANGE}" >> "$GITHUB_OUTPUT"
+
+          NEW_TAG="${PREFIX}${MA}.${MI}.${PA}${SUFFIX}"
+
+          echo "new_tag=${NEW_TAG}" >> "$GITHUB_OUTPUT"
+          echo "range=${RANGE}"     >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag on branch HEAD
+        run: |
+          TAG="${{ steps.version.outputs.new_tag }}"
+          SHA="${{ steps.head.outputs.sha }}"
+          git tag -a "$TAG" -m "Release $TAG" "$SHA"
+          git push origin "refs/tags/$TAG"
 
       - name: Generate release notes (subject, short SHA, author, link)
         id: notes
@@ -46,16 +83,19 @@ jobs:
           set -euo pipefail
           REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
           RANGE="${{ steps.version.outputs.range }}"
-          git log --no-merges --pretty=format:"- %s - by %an → ${REPO_URL}/commit/%H" ${RANGE} > notes.md || true
+          if [[ "$RANGE" == "HEAD" ]]; then
+            git log --no-merges --pretty=format:"- %s (%h) by %an → ${REPO_URL}/commit/%H" HEAD > notes.md || true
+          else
+            git log --no-merges --pretty=format:"- %s (%h) by %an → ${REPO_URL}/commit/%H" ${RANGE} > notes.md || true
+          fi
           [[ -s notes.md ]] || echo "No changes (empty range)." > notes.md
           echo "notes_path=notes.md" >> "$GITHUB_OUTPUT"
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release (for the tag)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.new_tag }}
-          target_commitish: 0.3.1x
-          name: Release ${{ steps.version.outputs.new_tag }}
+          tag_name: ${{ steps.version.outputs.new_tag }}   # tag already pinned to branch HEAD
+          name: ${{ steps.version.outputs.new_tag }}
           body_path: ${{ steps.notes.outputs.notes_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
