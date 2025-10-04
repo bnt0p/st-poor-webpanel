@@ -25,17 +25,15 @@ jobs:
         run: |
           set -euo pipefail
           VERSION_PREFIX="v"
-          BR_SUFFIX="-0.3.1y"   # keep versions independent per branch
-          LAST=$(git tag --list "${VERSION_PREFIX}[0-9]*.[0-9]*.[0-9]*${BR_SUFFIX}" | sort -V | tail -n1 || true)
+          LAST=$(git tag --list "${VERSION_PREFIX}[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n1 || true)
           if [[ -z "${LAST}" ]]; then
-            NEW="${VERSION_PREFIX}1.0.0${BR_SUFFIX}"
+            NEW="${VERSION_PREFIX}1.0.0"
             RANGE="HEAD"
           else
             V=${LAST#${VERSION_PREFIX}}
-            V=${V%${BR_SUFFIX}}
             IFS='.' read -r MA MI PA <<<"$V"
             PA=$((PA+1))
-            NEW="${VERSION_PREFIX}${MA}.${MI}.${PA}${BR_SUFFIX}"
+            NEW="${VERSION_PREFIX}${MA}.${MI}.${PA}"
             RANGE="${LAST}..HEAD"
           fi
           echo "new_tag=${NEW}" >> "$GITHUB_OUTPUT"
