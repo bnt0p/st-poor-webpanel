@@ -19,6 +19,10 @@ jobs:
       - name: Fetch tags
         run: git fetch --tags --force
 
+      - name: Branch SHA
+        id: head
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
       - name: Compute next numeric tag for 0.3.1y
         id: version
         shell: bash
@@ -37,11 +41,10 @@ jobs:
             NEXT=$((LAST_NUM + 1))
             RANGE="${BRANCH}-${LAST_NUM}..HEAD"
           fi
-          NEW_TAG="${BRANCH}-${NEXT}"
-          echo "new_tag=${NEW_TAG}" >> "$GITHUB_OUTPUT"
+          echo "new_tag=${BRANCH}-${NEXT}" >> "$GITHUB_OUTPUT"
           echo "range=${RANGE}" >> "$GITHUB_OUTPUT"
 
-      - name: Generate release notes (subject, short SHA, author, link)
+      - name: Generate release notes
         id: notes
         shell: bash
         run: |
@@ -52,11 +55,11 @@ jobs:
           [[ -s notes.md ]] || echo "No changes (empty range)." > notes.md
           echo "notes_path=notes.md" >> "$GITHUB_OUTPUT"
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release (tag on branch HEAD)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.new_tag }}
-          target_commitish: 0.3.1y
+          target_commitish: ${{ steps.head.outputs.sha }}  # <-- exact SHA of 0.3.1y
           name: ${{ steps.version.outputs.new_tag }}
           body_path: ${{ steps.notes.outputs.notes_path }}
         env:
