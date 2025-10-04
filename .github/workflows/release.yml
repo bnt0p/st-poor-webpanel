@@ -1,0 +1,42 @@
+name: Release 0.3.1y
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release-031y:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 0.3.1y
+        uses: actions/checkout@v4
+        with:
+          ref: 0.3.1y
+          fetch-depth: 0
+
+      - name: Ensure tags available
+        run: git fetch --tags --force
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          LAST_TAG="$(git describe --tags --abbrev=0 --match '*' 2>/dev/null || true)"
+          if [[ -n "${LAST_TAG}" ]]; then
+            git log --pretty=format:"- %s" "${LAST_TAG}..HEAD" > notes.md || true
+          else
+            git log --pretty=format:"- %s" > notes.md || true
+          fi
+          [[ -s notes.md ]] || echo "No changes since last tag." > notes.md
+          echo "notes_path=notes.md" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: 0.3.1y
+          target_commitish: 0.3.1y
+          name: Release 0.3.1y
+          body_path: ${{ steps.notes.outputs.notes_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
