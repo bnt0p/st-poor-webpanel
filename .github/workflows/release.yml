@@ -1,12 +1,7 @@
-name: Release
+name: Release (per-branch)
 
 on:
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: "Branch to release (e.g., 0.3.1x or 0.3.1y)"
-        required: true
-        default: "0.3.1y"
+  workflow_dispatch: {}   # must be present on each branch to dispatch that branch
 
 permissions:
   contents: write
@@ -15,17 +10,10 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout workflow repo (default branch)
+      - name: Checkout this branch
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-
-      - name: Fetch target branch
-        run: |
-          git fetch origin "${{ github.event.inputs.branch }}:${{ github.event.inputs.branch }}"
-
-      - name: Switch to target branch
-        run: git checkout "${{ github.event.inputs.branch }}"
+          fetch-depth: 0   # need full history + tags
 
       - name: Configure git (for tagging)
         run: |
@@ -35,20 +23,21 @@ jobs:
       - name: Fetch tags
         run: git fetch --tags --force
 
-      - name: Resolve branch HEAD SHA
-        id: head
-        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Resolve branch/HEAD
+        id: meta
+        run: |
+          echo "branch=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Compute next version tag (per-branch suffix)
+      - name: Compute next version tag (scoped to this branch)
         id: version
         shell: bash
         run: |
           set -euo pipefail
-          BRANCH="${{ github.event.inputs.branch }}"
+          BRANCH="${{ steps.meta.outputs.branch }}"
           PREFIX="v"
-          SUFFIX="-${BRANCH}"   # ensures independent version streams per branch
+          SUFFIX="-${BRANCH}"  # keeps independent streams per branch, e.g., v1.0.3-0.3.1y
 
-          # Find latest tag matching vMAJ.MIN.PAT-<branch>
           LAST=$(
             git tag -l "${PREFIX}[0-9]*.[0-9]*.[0-9]*${SUFFIX}" \
             | sed -n "s/^${PREFIX}\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\)${SUFFIX}$/\1.\2.\3/p" \
@@ -69,10 +58,10 @@ jobs:
           echo "new_tag=${NEW_TAG}" >> "$GITHUB_OUTPUT"
           echo "range=${RANGE}"     >> "$GITHUB_OUTPUT"
 
-      - name: Create and push tag on branch HEAD
+      - name: Create and push tag on this branch’s HEAD
         run: |
           TAG="${{ steps.version.outputs.new_tag }}"
-          SHA="${{ steps.head.outputs.sha }}"
+          SHA="${{ steps.meta.outputs.sha }}"
           git tag -a "$TAG" -m "Release $TAG" "$SHA"
           git push origin "refs/tags/$TAG"
 
@@ -94,7 +83,7 @@ jobs:
       - name: Create GitHub Release (for the tag)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.new_tag }}   # tag already pinned to branch HEAD
+          tag_name: ${{ steps.version.outputs.new_tag }}   # tag points to this branch’s HEAD
           name: ${{ steps.version.outputs.new_tag }}
           body_path: ${{ steps.notes.outputs.notes_path }}
         env:
