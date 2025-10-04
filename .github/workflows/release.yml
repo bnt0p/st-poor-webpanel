@@ -1,5 +1,4 @@
-# .github/workflows/release-0.3.1y.yml
-name: Release 0.3.1y (dated tag)
+name: Release 0.3.1y
 
 on:
   workflow_dispatch:
@@ -11,7 +10,7 @@ jobs:
   release-031y:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout branch 0.3.1y
+      - name: Checkout 0.3.1y
         uses: actions/checkout@v4
         with:
           ref: 0.3.1y
@@ -20,53 +19,45 @@ jobs:
       - name: Fetch tags
         run: git fetch --tags --force
 
-      - name: Compute dated tag (America/Sao_Paulo)
-        id: meta
+      - name: Compute next version tag (per-branch)
+        id: version
         shell: bash
         run: |
           set -euo pipefail
-          BR_TZ="America/Sao_Paulo"
-          DATE=$(TZ="$BR_TZ" date +'%Y%m%d-%H%M')
-          HUMAN=$(TZ="$BR_TZ" date +'%Y-%m-%d %H:%M %Z')
-          BASE="0.3.1y"
-          TAG="${BASE}-${DATE}"
-          # Ensure uniqueness if the same minute was tagged before
-          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
-            TAG="${TAG}-${GITHUB_RUN_NUMBER}"
+          VERSION_PREFIX="v"
+          BR_SUFFIX="-0.3.1y"   # keep versions independent per branch
+          LAST=$(git tag --list "${VERSION_PREFIX}[0-9]*.[0-9]*.[0-9]*${BR_SUFFIX}" | sort -V | tail -n1 || true)
+          if [[ -z "${LAST}" ]]; then
+            NEW="${VERSION_PREFIX}1.0.0${BR_SUFFIX}"
+            RANGE="HEAD"
+          else
+            V=${LAST#${VERSION_PREFIX}}
+            V=${V%${BR_SUFFIX}}
+            IFS='.' read -r MA MI PA <<<"$V"
+            PA=$((PA+1))
+            NEW="${VERSION_PREFIX}${MA}.${MI}.${PA}${BR_SUFFIX}"
+            RANGE="${LAST}..HEAD"
           fi
-          {
-            echo "tag=${TAG}"
-            echo "human=${HUMAN}"
-          } >> "$GITHUB_OUTPUT"
+          echo "new_tag=${NEW}" >> "$GITHUB_OUTPUT"
+          echo "range=${RANGE}" >> "$GITHUB_OUTPUT"
 
-      - name: Generate release notes
+      - name: Generate release notes (subject, short SHA, author, link)
         id: notes
+        shell: bash
         run: |
           set -euo pipefail
-
-          # Base URL to your repo
           REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
-
-          # Find last tag (optional)
-          LAST_TAG="$(git describe --tags --abbrev=0 --match '*' 2>/dev/null || true)"
-
-          if [[ -n "${LAST_TAG}" ]]; then
-            RANGE="${LAST_TAG}..HEAD"
-          else
-            RANGE="HEAD"
-          fi
-
-          git log --no-merges --pretty=format:"- %s (%h) by %an → ${REPO_URL}/commit/%H" $RANGE > notes.md
-
-          [[ -s notes.md ]] || echo "No changes since last tag." > notes.md
+          RANGE="${{ steps.version.outputs.range }}"
+          git log --no-merges --pretty=format:"- %s (%h) by %an → ${REPO_URL}/commit/%H" ${RANGE} > notes.md || true
+          [[ -s notes.md ]] || echo "No changes (empty range)." > notes.md
           echo "notes_path=notes.md" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.meta.outputs.tag }}
+          tag_name: ${{ steps.version.outputs.new_tag }}
           target_commitish: 0.3.1y
-          name: "Release 0.3.1y • ${{ steps.meta.outputs.human }}"
+          name: Release ${{ steps.version.outputs.new_tag }}
           body_path: ${{ steps.notes.outputs.notes_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
