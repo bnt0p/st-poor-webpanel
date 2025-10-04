@@ -1,4 +1,5 @@
-name: Release 0.3.1y
+# .github/workflows/release-0.3.1y.yml
+name: Release 0.3.1y (dated tag)
 
 on:
   workflow_dispatch:
@@ -10,33 +11,62 @@ jobs:
   release-031y:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout 0.3.1y
+      - name: Checkout branch 0.3.1y
         uses: actions/checkout@v4
         with:
           ref: 0.3.1y
           fetch-depth: 0
 
-      - name: Ensure tags available
+      - name: Fetch tags
         run: git fetch --tags --force
+
+      - name: Compute dated tag (America/Sao_Paulo)
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          BR_TZ="America/Sao_Paulo"
+          DATE=$(TZ="$BR_TZ" date +'%Y%m%d-%H%M')
+          HUMAN=$(TZ="$BR_TZ" date +'%Y-%m-%d %H:%M %Z')
+          BASE="0.3.1y"
+          TAG="${BASE}-${DATE}"
+          # Ensure uniqueness if the same minute was tagged before
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            TAG="${TAG}-${GITHUB_RUN_NUMBER}"
+          fi
+          {
+            echo "tag=${TAG}"
+            echo "human=${HUMAN}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Generate release notes
         id: notes
         run: |
+          set -euo pipefail
+
+          # Base URL to your repo
+          REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
+
+          # Find last tag (optional)
           LAST_TAG="$(git describe --tags --abbrev=0 --match '*' 2>/dev/null || true)"
+
           if [[ -n "${LAST_TAG}" ]]; then
-            git log --pretty=format:"- %s" "${LAST_TAG}..HEAD" > notes.md || true
+            RANGE="${LAST_TAG}..HEAD"
           else
-            git log --pretty=format:"- %s" > notes.md || true
+            RANGE="HEAD"
           fi
+
+          git log --no-merges --pretty=format:"- %s (%h) by %an → ${REPO_URL}/commit/%H" $RANGE > notes.md
+
           [[ -s notes.md ]] || echo "No changes since last tag." > notes.md
           echo "notes_path=notes.md" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: 0.3.1y
+          tag_name: ${{ steps.meta.outputs.tag }}
           target_commitish: 0.3.1y
-          name: Release 0.3.1y
+          name: "Release 0.3.1y • ${{ steps.meta.outputs.human }}"
           body_path: ${{ steps.notes.outputs.notes_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
