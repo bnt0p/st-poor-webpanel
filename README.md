@@ -153,3 +153,7 @@ docker compose up -d --build --force-recreate
 ```
 
 This project is under GNU General Public License v3.0. Refer to LICENSE.md.
+
+_personal note_
+_running workflow:_
+_gh workflow run release.yml --ref 0.3.1y_
