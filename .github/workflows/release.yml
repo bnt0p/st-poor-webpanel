@@ -46,7 +46,7 @@ jobs:
           set -euo pipefail
           REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
           RANGE="${{ steps.version.outputs.range }}"
-          git log --no-merges --pretty=format:"- %s (%h) by %an → ${REPO_URL}/commit/%H" ${RANGE} > notes.md || true
+          git log --no-merges --pretty=format:"- %s - by %an → ${REPO_URL}/commit/%H" ${RANGE} > notes.md || true
           [[ -s notes.md ]] || echo "No changes (empty range)." > notes.md
           echo "notes_path=notes.md" >> "$GITHUB_OUTPUT"
 
