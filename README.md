@@ -1,9 +1,11 @@
 # CS2 Surf Web Panel
 
 # ATTENTION
-CHOOSE YOUR BRANCH DEPENDING ON THE SHARPTIMER VERSION YOU'RE RUNNING.
+##CHOOSE YOUR BRANCH DEPENDING ON THE SHARPTIMER VERSION YOU'RE RUNNING.
 
-[0.3.1x](https://github.com/bnt0p/st-poor-webpanel/tree/0.3.1x) or [0.3.1y](https://github.com/bnt0p/st-poor-webpanel/tree/0.3.1y)
+##[0.3.1x](https://github.com/bnt0p/st-poor-webpanel/tree/0.3.1x) or [0.3.1y](https://github.com/bnt0p/st-poor-webpanel/tree/0.3.1y)
+## You can download the files on the release page as well for each version ->
+
 A comprehensive, self-hostable web panel for Counter-Strike 2 surf servers running the [SharpTimer](https://github.com/Letaryat/poor-sharptimer) plugin. 
 
 The application is fully containerized with Docker, making deployment straightforward.
