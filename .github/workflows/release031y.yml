@@ -19,24 +19,26 @@ jobs:
       - name: Fetch tags
         run: git fetch --tags --force
 
-      - name: Compute next version tag (per-branch)
+      - name: Compute next numeric tag for 0.3.1y
         id: version
         shell: bash
         run: |
           set -euo pipefail
-          VERSION_PREFIX="v"
-          LAST=$(git tag --list "${VERSION_PREFIX}[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n1 || true)
-          if [[ -z "${LAST}" ]]; then
-            NEW="${VERSION_PREFIX}1.0.0"
+          BRANCH="0.3.1y"
+          LAST_NUM=$(
+            git tag -l "${BRANCH}-*" \
+            | sed -n "s/^${BRANCH}-\([0-9]\+\)$/\1/p" \
+            | sort -n | tail -1
+          )
+          if [[ -z "${LAST_NUM:-}" ]]; then
+            NEXT=1
             RANGE="HEAD"
           else
-            V=${LAST#${VERSION_PREFIX}}
-            IFS='.' read -r MA MI PA <<<"$V"
-            PA=$((PA+1))
-            NEW="${VERSION_PREFIX}${MA}.${MI}.${PA}"
-            RANGE="${LAST}..HEAD"
+            NEXT=$((LAST_NUM + 1))
+            RANGE="${BRANCH}-${LAST_NUM}..HEAD"
           fi
-          echo "new_tag=${NEW}" >> "$GITHUB_OUTPUT"
+          NEW_TAG="${BRANCH}-${NEXT}"
+          echo "new_tag=${NEW_TAG}" >> "$GITHUB_OUTPUT"
           echo "range=${RANGE}" >> "$GITHUB_OUTPUT"
 
       - name: Generate release notes (subject, short SHA, author, link)
@@ -46,7 +48,7 @@ jobs:
           set -euo pipefail
           REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
           RANGE="${{ steps.version.outputs.range }}"
-          git log --no-merges --pretty=format:"- %s - by %an → ${REPO_URL}/commit/%H" ${RANGE} > notes.md || true
+          git log --no-merges --pretty=format:"- %s (%h) by %an → ${REPO_URL}/commit/%H" ${RANGE} > notes.md || true
           [[ -s notes.md ]] || echo "No changes (empty range)." > notes.md
           echo "notes_path=notes.md" >> "$GITHUB_OUTPUT"
 
@@ -55,7 +57,7 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.new_tag }}
           target_commitish: 0.3.1y
-          name: Release ${{ steps.version.outputs.new_tag }}
+          name: ${{ steps.version.outputs.new_tag }}
           body_path: ${{ steps.notes.outputs.notes_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
