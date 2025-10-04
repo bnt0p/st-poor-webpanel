@@ -278,6 +278,10 @@ const Leaderboards = () => {
         params.push(`bonus=${selectedTrack}`);
       }
       
+      if (selectedMode !== "Standard") {
+        params.push(`mode=${selectedMode}`);
+      }
+
       if (selectedStyle !== "0") {
         let styleValue;
 
