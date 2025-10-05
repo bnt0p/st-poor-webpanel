@@ -1,0 +1,90 @@
+name: Release (per-branch)
+
+on:
+  workflow_dispatch: {}   # must be present on each branch to dispatch that branch
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # need full history + tags
+
+      - name: Configure git (for tagging)
+        run: |
+          git config user.name  "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
+      - name: Fetch tags
+        run: git fetch --tags --force
+
+      - name: Resolve branch/HEAD
+        id: meta
+        run: |
+          echo "branch=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Compute next version tag (scoped to this branch)
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH="${{ steps.meta.outputs.branch }}"
+          PREFIX="v"
+          SUFFIX="-${BRANCH}"  # keeps independent streams per branch, e.g., v1.0.3-0.3.1y
+
+          LAST=$(
+            git tag -l "${PREFIX}[0-9]*.[0-9]*.[0-9]*${SUFFIX}" \
+            | sed -n "s/^${PREFIX}\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\)${SUFFIX}$/\1.\2.\3/p" \
+            | sort -V | tail -1
+          )
+
+          if [[ -z "${LAST}" ]]; then
+            MA=1; MI=0; PA=0
+            RANGE="HEAD"
+          else
+            IFS='.' read -r MA MI PA <<< "${LAST}"
+            PA=$((PA+1))
+            RANGE="v${LAST}${SUFFIX}..HEAD"
+          fi
+
+          NEW_TAG="${PREFIX}${MA}.${MI}.${PA}${SUFFIX}"
+
+          echo "new_tag=${NEW_TAG}" >> "$GITHUB_OUTPUT"
+          echo "range=${RANGE}"     >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag on this branch’s HEAD
+        run: |
+          TAG="${{ steps.version.outputs.new_tag }}"
+          SHA="${{ steps.meta.outputs.sha }}"
+          git tag -a "$TAG" -m "Release $TAG" "$SHA"
+          git push origin "refs/tags/$TAG"
+
+      - name: Generate release notes (subject, short SHA, author, link)
+        id: notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPO_URL="https://github.com/${GITHUB_REPOSITORY}"
+          RANGE="${{ steps.version.outputs.range }}"
+          if [[ "$RANGE" == "HEAD" ]]; then
+            git log --no-merges --pretty=format:"- %s (%h) by %an → ${REPO_URL}/commit/%H" HEAD > notes.md || true
+          else
+            git log --no-merges --pretty=format:"- %s (%h) by %an → ${REPO_URL}/commit/%H" ${RANGE} > notes.md || true
+          fi
+          [[ -s notes.md ]] || echo "No changes (empty range)." > notes.md
+          echo "notes_path=notes.md" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release (for the tag)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.new_tag }}   # tag points to this branch’s HEAD
+          name: ${{ steps.version.outputs.new_tag }}
+          body_path: ${{ steps.notes.outputs.notes_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

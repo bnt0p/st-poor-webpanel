@@ -38,6 +38,7 @@ const fetchMapRecords = async (mapName: string, track: string, style: string): P
   if (style !== "0") {
     params.push(`style=${style}`);
   }
+  
   if (params.length > 0) {
     apiUrl += "?" + params.join("&");
   }    
