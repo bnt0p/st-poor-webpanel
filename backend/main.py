@@ -212,7 +212,6 @@ def get_map_records(
     style: int = 0,
     steamid: int = 0,
 ):
-    print(style)
     map_query = f"{mapy}_bonus{bonus}" if bonus > 0 else mapy
     sql = """
         SELECT *

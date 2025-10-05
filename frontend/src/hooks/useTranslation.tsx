@@ -1,8 +1,9 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import enTranslations from '../lang/en.json';
 import ptbrTranslations from '../lang/ptbr.json';
+import turkishTranslations from '../lang/tr.json';
 
-type Language = 'en' | 'ptbr';
+type Language = 'en' | 'ptbr' | 'tr';
 type Translations = typeof enTranslations;
 
 interface TranslationContextType {
@@ -16,6 +17,7 @@ const TranslationContext = createContext<TranslationContextType | undefined>(und
 const translations: Record<Language, Translations> = {
   en: enTranslations,
   ptbr: ptbrTranslations,
+  tr: turkishTranslations
 };
 
 export const TranslationProvider = ({ children }: { children: ReactNode }) => {
