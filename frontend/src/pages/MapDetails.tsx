@@ -25,18 +25,42 @@ interface Avatar {
   avatar_url: string;
 }
 
-const fetchMapRecords = async (mapName: string, track: string, mode: string): Promise<MapRecord[]> => {
-  if (!mapName || !track || !mode) return [];
+const fetchMapRecords = async (mapName: string, track: string, mode: string, style: string): Promise<MapRecord[]> => {
+  if (!mapName || !track || !mode || !style) return [];
   
   let apiUrl = `${import.meta.env.VITE_API_URL}/surf/top-map/${mapName}`;
   
   // Add bonus parameter if track is not main
-  if (track !== "main") {
-    const bonusNumber = track.replace("bonus", "");
-    apiUrl += `?bonus=${bonusNumber}`;
-  }
-  
-  const response = await fetch(apiUrl);
+  // if (track !== "main") {
+  //   const bonusNumber = track.replace("bonus", "");
+  //   apiUrl += `?bonus=${bonusNumber}`;
+  // }
+    const params = [];
+    
+    if (track !== "0") {
+      params.push(`bonus=${track}`);
+    }
+    
+    if (style !== "0") {
+      params.push(`style=${style}`);
+    }
+
+    if (mode !== "0") {
+      params.push(`mode=${mode}`);
+    }
+    
+    if (params.length > 0) {
+      apiUrl += "?" + params.join("&");
+    }    
+      
+ 
+  const response = await fetch(apiUrl, {
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json',
+      }
+    });
+
   if (!response.ok) {
     throw new Error("Failed to fetch map records");
   }
@@ -45,7 +69,7 @@ const fetchMapRecords = async (mapName: string, track: string, mode: string): Pr
   // Filter records based on mode and ensure we have proper positions
   const filteredRecords = data.records
     ? data.records
-        .filter((record: any) => record.Mode === mode)
+        .filter((record: any) => record.Mode === mode && record.Style == style)
         .map((record: any, index: number) => ({
           ...record,
           Position: index + 1
@@ -67,22 +91,24 @@ const fetchAvatar = async (steamId: string): Promise<Avatar> => {
 const MapDetails = () => {
   const { t } = useTranslation();
   const { mapName } = useParams<{ mapName: string }>();
-  const [selectedTrack, setSelectedTrack] = useState("");
-  const [selectedMode, setSelectedMode] = useState("");
+  const [selectedTrack, setSelectedTrack] = useState("0");
+  const [selectedMode, setSelectedMode] = useState("Standard");
+  const [selectedStyle, setSelectedStyle] = useState("0");
 
   const decodedMapName = mapName ? decodeURIComponent(mapName) : "";
 
   const { data: records = [], isLoading, error } = useQuery({
-    queryKey: ["mapRecords", decodedMapName, selectedTrack, selectedMode],
-    queryFn: () => fetchMapRecords(decodedMapName, selectedTrack, selectedMode),
-    enabled: !!decodedMapName && !!selectedTrack && !!selectedMode,
+    queryKey: ["mapRecords", decodedMapName, selectedTrack, selectedMode, selectedStyle],
+    queryFn: () => fetchMapRecords(decodedMapName, selectedTrack, selectedMode, selectedStyle),
+    enabled: !!decodedMapName && !!selectedTrack && !!selectedMode && !!selectedStyle,
   });
 
   // Set default values
   useEffect(() => {
-    if (!selectedTrack) setSelectedTrack("main");
+    if (!selectedTrack) setSelectedTrack("0");
     if (!selectedMode) setSelectedMode("Standard");
-  }, [selectedTrack, selectedMode]);
+    if (!selectedMode) setSelectedStyle("0");
+  }, [selectedTrack, selectedMode, selectedStyle]);
 
   const formatDate = (unixStamp: number) => {
     return new Date(unixStamp * 1000).toLocaleDateString();
@@ -169,17 +195,17 @@ const MapDetails = () => {
                 <SelectValue placeholder={t("mapDetails.selectTrack")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="main">{t("mapDetails.mainTrack")}</SelectItem>
-                <SelectItem value="bonus1">Bonus 1</SelectItem>
-                <SelectItem value="bonus2">Bonus 2</SelectItem>
-                <SelectItem value="bonus3">Bonus 3</SelectItem>
-                <SelectItem value="bonus4">Bonus 4</SelectItem>
-                <SelectItem value="bonus5">Bonus 5</SelectItem>
-                <SelectItem value="bonus6">Bonus 6</SelectItem>
-                <SelectItem value="bonus7">Bonus 7</SelectItem>
-                <SelectItem value="bonus8">Bonus 8</SelectItem>
-                <SelectItem value="bonus9">Bonus 9</SelectItem>
-                <SelectItem value="bonus10">Bonus 10</SelectItem>
+                <SelectItem value="0">{t("mapDetails.mainTrack")}</SelectItem>
+                <SelectItem value="1">Bonus 1</SelectItem>
+                <SelectItem value="2">Bonus 2</SelectItem>
+                <SelectItem value="3">Bonus 3</SelectItem>
+                <SelectItem value="4">Bonus 4</SelectItem>
+                <SelectItem value="5">Bonus 5</SelectItem>
+                <SelectItem value="6">Bonus 6</SelectItem>
+                <SelectItem value="7">Bonus 7</SelectItem>
+                <SelectItem value="8">Bonus 8</SelectItem>
+                <SelectItem value="9">Bonus 9</SelectItem>
+                <SelectItem value="10">Bonus 10</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -190,12 +216,33 @@ const MapDetails = () => {
                 <SelectValue placeholder={t("mapDetails.selectMode")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Standard">{t("mapDetails.standard")}</SelectItem>
+                <SelectItem value="Standard">Standard</SelectItem>
                 <SelectItem value="85t">85t</SelectItem>
                 <SelectItem value="102t">102t</SelectItem>
                 <SelectItem value="128t">128t</SelectItem>
                 <SelectItem value="Source">Source</SelectItem>
                 <SelectItem value="Bhop">Bhop</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex-1">
+            <Select value={selectedStyle} onValueChange={setSelectedStyle}>
+              <SelectTrigger>
+                <SelectValue placeholder={t("mapDetails.selectMode")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="0">Normal</SelectItem>
+                <SelectItem value="1">Low gravity</SelectItem>
+                <SelectItem value="2">Sideways</SelectItem>
+                <SelectItem value="3">Only W</SelectItem>
+                <SelectItem value="4">400 Vel</SelectItem>
+                <SelectItem value="5">High Gravity</SelectItem>
+                <SelectItem value="6">Only A</SelectItem>
+                <SelectItem value="7">Only D</SelectItem>
+                <SelectItem value="8">Only S</SelectItem>
+                <SelectItem value="9">Half Sideways</SelectItem>
+                <SelectItem value="10">Fast Forward</SelectItem>
               </SelectContent>
             </Select>
           </div>

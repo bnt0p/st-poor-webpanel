@@ -240,10 +240,15 @@ const Leaderboards = () => {
       if (selectedStyle !== "0") {
         params.push(`style=${selectedStyle}`);
       }
+
+      if (selectedMode !== "0") {
+        params.push(`mode=${selectedMode}`);
+      }
       
       if (params.length > 0) {
         url += "?" + params.join("&");
-      }      
+      }    
+       
       const response = await fetch(url, {
         mode: 'cors',
         headers: {
