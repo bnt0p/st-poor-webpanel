@@ -12,7 +12,7 @@ The application is fully containerized with Docker, making deployment straightfo
 # NOTES
 this project started as a personal project for my server [rage.surf](https://rage.surf), which I hardcoded to it and just adapted to release public, some features may be bad coded, not work as expected, etc. Feel free to contribute to it with PR.
 
-LIVE PREVIEW: https://rage.surf
+LIVE PREVIEW: https://poor-panel.bnt0p.dev/
 
 _I plan to add updates to it, if you want to discuss ideas, hop on this DC server: https://discord.gg/SS2fRuxupm and we can discuss the future of this poor panel xD_
 <img width="1281" height="1347" alt="image" src="https://github.com/user-attachments/assets/f70dbf43-fbc2-4b30-a1c8-66c3cfa3f7e0" />
