@@ -43,7 +43,7 @@ _I plan to add updates to it, if you want to discuss ideas, hop on this DC serve
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/bnt0p/st-poor-webpanel.git
+git clone -b 0.3.1y https://github.com/bnt0p/st-poor-webpanel.git
 cd st-poor-webpanel
 ```
 
